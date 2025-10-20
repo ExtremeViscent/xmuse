@@ -1,0 +1,9 @@
+pedalboard
+mido
+transformers
+torch
+numpy
+tqdm
+psutil
+
+

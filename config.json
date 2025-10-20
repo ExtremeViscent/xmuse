@@ -1,0 +1,136 @@
+{
+    "ranges": {
+        "a_octave_oct": [
+            -4.0,
+            4.0,
+            1.0
+        ],
+        "a_semi_semitones": [
+            -12.0,
+            12.0,
+            1.0
+        ],
+        "a_scan_bpm_rate": [
+            0.0,
+            1.0,
+            0.16666666666666666
+        ],
+        "a_unison": [
+            1.0,
+            16.0,
+            1.0
+        ],
+        "b_octave_oct": [
+            -4.0,
+            4.0,
+            1.0
+        ],
+        "b_semi_semitones": [
+            -12.0,
+            12.0,
+            1.0
+        ],
+        "b_scan_bpm_rate": [
+            0.0,
+            1.0,
+            0.16666666666666666
+        ],
+        "b_unison": [
+            1.0,
+            16.0,
+            1.0
+        ],
+        "c_octave_oct": [
+            -4.0,
+            4.0,
+            1.0
+        ],
+        "c_semi_semitones": [
+            -12.0,
+            12.0,
+            1.0
+        ],
+        "c_scan_bpm_rate": [
+            0.0,
+            1.0,
+            0.16666666666666666
+        ],
+        "c_unison": [
+            1.0,
+            16.0,
+            1.0
+        ],
+        "sub_octave_oct": [
+            -4.0,
+            4.0,
+            1.0
+        ],
+        "filter_1_x": [
+            0.0,
+            1.0,
+            1.0
+        ],
+        "filter_1_y": [
+            0.0,
+            1.0,
+            1.0
+        ],
+        "filter_2_x": [
+            0.0,
+            1.0,
+            1.0
+        ],
+        "filter_2_y": [
+            0.0,
+            1.0,
+            1.0
+        ]
+    },
+    "num_categories": {
+        "a_enable": 2,
+        "a_pitch_track": 2,
+        "a_reverse": 2,
+        "a_scan_key_track": 2,
+        "a_loop_mode": 5,
+        "a_relative_loop": 2,
+        "a_slice_play_mode": 2,
+        "a_uni_stack": 9,
+        "a_warp": 1,
+        "a_warp_mode": 70,
+        "a_warp_2": 1,
+        "a_warp_2_mode": 70,
+        "b_enable": 2,
+        "b_pitch_track": 2,
+        "b_reverse": 2,
+        "b_scan_key_track": 2,
+        "b_loop_mode": 5,
+        "b_relative_loop": 2,
+        "b_slice_play_mode": 2,
+        "b_uni_stack": 9,
+        "b_warp": 1,
+        "b_warp_mode": 70,
+        "b_warp_2": 1,
+        "b_warp_2_mode": 70,
+        "c_enable": 2,
+        "c_pitch_track": 2,
+        "c_reverse": 2,
+        "c_scan_key_track": 2,
+        "c_loop_mode": 5,
+        "c_relative_loop": 2,
+        "c_slice_play_mode": 2,
+        "c_uni_stack": 9,
+        "c_warp": 1,
+        "c_warp_mode": 70,
+        "c_warp_2": 1,
+        "c_warp_2_mode": 70,
+        "sub_enable": 2,
+        "sub_pitch_track": 2,
+        "sub_shape": 6,
+        "sub_cont_phase": 2,
+        "filter_1_on": 2,
+        "filter_2_on": 2,
+        "arp_enable": 2
+    },
+    "cont_types": "{'a_octave_oct': <class 'float'>, 'a_semi_semitones': <class 'float'>, 'a_scan_bpm_rate': <class 'str'>, 'a_unison': <class 'float'>, 'b_octave_oct': <class 'float'>, 'b_semi_semitones': <class 'float'>, 'b_scan_bpm_rate': <class 'str'>, 'b_unison': <class 'float'>, 'c_octave_oct': <class 'float'>, 'c_semi_semitones': <class 'float'>, 'c_scan_bpm_rate': <class 'str'>, 'c_unison': <class 'float'>, 'sub_octave_oct': <class 'float'>, 'filter_1_x': <class 'float'>, 'filter_1_y': <class 'float'>, 'filter_2_x': <class 'float'>, 'filter_2_y': <class 'float'>}",
+    "cat_types": "{'a_enable': <class 'bool'>, 'a_pitch_track': <class 'bool'>, 'a_reverse': <class 'str'>, 'a_scan_key_track': <class 'bool'>, 'a_loop_mode': <class 'str'>, 'a_relative_loop': <class 'bool'>, 'a_slice_play_mode': <class 'str'>, 'a_uni_stack': <class 'str'>, 'a_warp': <class 'str'>, 'a_warp_mode': <class 'str'>, 'a_warp_2': <class 'str'>, 'a_warp_2_mode': <class 'str'>, 'b_enable': <class 'bool'>, 'b_pitch_track': <class 'bool'>, 'b_reverse': <class 'str'>, 'b_scan_key_track': <class 'bool'>, 'b_loop_mode': <class 'str'>, 'b_relative_loop': <class 'bool'>, 'b_slice_play_mode': <class 'str'>, 'b_uni_stack': <class 'str'>, 'b_warp': <class 'str'>, 'b_warp_mode': <class 'str'>, 'b_warp_2': <class 'str'>, 'b_warp_2_mode': <class 'str'>, 'c_enable': <class 'bool'>, 'c_pitch_track': <class 'bool'>, 'c_reverse': <class 'str'>, 'c_scan_key_track': <class 'bool'>, 'c_loop_mode': <class 'str'>, 'c_relative_loop': <class 'bool'>, 'c_slice_play_mode': <class 'str'>, 'c_uni_stack': <class 'str'>, 'c_warp': <class 'str'>, 'c_warp_mode': <class 'str'>, 'c_warp_2': <class 'str'>, 'c_warp_2_mode': <class 'str'>, 'sub_enable': <class 'bool'>, 'sub_pitch_track': <class 'bool'>, 'sub_shape': <class 'str'>, 'sub_cont_phase': <class 'bool'>, 'filter_1_on': <class 'bool'>, 'filter_2_on': <class 'bool'>, 'arp_enable': <class 'bool'>}"
+}
