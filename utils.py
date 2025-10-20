@@ -26,10 +26,12 @@ def filter_cat_params(params):
     cat_params = {}
     for k, v in params.items():
         if len(v.valid_values) < 100:
-            if 'semitones' in k or 'rate' in k or v.type == float:
+            if 'semitones' in k or 'rate' in k or v.type == float or range == (.0, 1.0, 1.0):
                 cont_params[k] = v
             else:
                 cat_params[k] = v
+        else:
+            cont_params[k] = v
     return cat_params, cont_params
 
 def to_onehot(params):
