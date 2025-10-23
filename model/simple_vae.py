@@ -135,7 +135,7 @@ def get_vae_model(dataset: RandomParamDataset, name: str):
     # Only default model for now
     if name == "default":
         model = TransformerVAE(
-            cont_tokens=dataset.num_cont_params,
+            cont_tokens=len(dataset.cont_ranges),
             cat_sizes=dataset.cat_sizes,
             dim=512,
             heads=8,

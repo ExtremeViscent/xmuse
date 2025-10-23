@@ -32,10 +32,10 @@ class ContinuousTokenizer(nn.Module):
             Tensor of shape (B, n_tokens, dim) with embeddings
         """
         B, n_tokens = x_z.shape
-        assert n_tokens == self.id_emb.shape[0], "Input token count does not match tokenizer configuration."
+        assert n_tokens == self.id_emb.shape[1], "Input token count does not match tokenizer configuration."
         
         # Pass through MLP
-        x_emb = self.mlp(x_z)  # (B, n_tokens, dim)
+        x_emb = self.mlp(x_z.unsqueeze(-1))  # (B, n_tokens, dim)
 
         # Add type and id embeddings
         out = x_emb + self.type_emb + self.id_emb  # (B, n_tokens, dim)
@@ -77,7 +77,7 @@ class DiscreteTokenizer(nn.Module):
             Tensor of shape (B, n_tokens, dim) with embeddings
         """
         B, n_tokens = x_cat.shape
-        assert n_tokens == self.id_emb.shape[0], "Input token count does not match tokenizer configuration."
+        assert n_tokens == self.id_emb.shape[1], "Input token count does not match tokenizer configuration."
 
         emb_list = []
         for i in range(n_tokens):

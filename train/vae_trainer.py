@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.amp import autocast, GradScaler
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from data.dataloader import RandomParamDataset
 from model.simple_vae import get_vae_model
@@ -87,38 +88,34 @@ class VAETrainer:
           tgt_cat: (B, n_disc)  离散目标 index
         """
         # raw tensors on cpu -> device
-        cont_raw = data["continuous"].to(self.device, dtype=torch.float32)  # (B, n_cont)
-        disc_raw = data["categorical"].to(self.device)                      # 可能是 (B, sum b_i) one-hot 或 (B, n_disc) index
+        cont_raw = data["continuous"].to(self.device)       # (B, n_cont)
+        disc_raw = data["categorical"].to(self.device)      # (B, sum b_i) one-hot
 
         # --- continuous: min-max到[-1,1] ---
-        cont_min = self.dataset.cont_min_vals.to(self.device)
-        cont_max = self.dataset.cont_max_vals.to(self.device)
+        cont_min = torch.tensor([r[0] for r in self.dataset.cont_ranges], device=self.device)
+        cont_max = torch.tensor([r[1] for r in self.dataset.cont_ranges], device=self.device)
         eps = 1e-6
         scale = (cont_max - cont_min).clamp_min(eps)
         x_cont = 2.0 * (cont_raw - cont_min) / scale - 1.0
-        tgt_cont = x_cont.detach()  # NLL 在同尺度上重构
 
-        # --- discrete: 兼容 one-hot 或 index ---
-        if disc_raw.dim() == 2 and disc_raw.size(1) == sum(self.dataset.cat_sizes):
-            # 拼接 one-hot -> 拆列
-            disc_sizes = self.dataset.cat_sizes
-            idx_list = []
-            start = 0
-            for k in disc_sizes:
-                end = start + k
-                idx_list.append(self._to_indices_from_onehot(disc_raw[:, start:end]))
-                start = end
-            x_cat = torch.stack(idx_list, dim=1)   # (B, n_disc)
-        else:
-            # 已经是 index 形式
-            x_cat = disc_raw.to(torch.long)        # (B, n_disc)
+        # 拼接 one-hot -> 拆列
+        disc_sizes = self.dataset.cat_sizes
+        idx_list = []
+        start = 0
+        for k in disc_sizes:
+            end = start + k
+            idx_list.append(self._to_indices_from_onehot(disc_raw[:, start:end]))
+            start = end
+        x_cat = torch.stack(idx_list, dim=1)   # (B, n_disc)
 
         tgt_cat = x_cat.detach()
 
         # cast 到 model dtype
         x_cont = x_cont.to(self.dtype)
+        tgt_cont = x_cont.detach()  # NLL 在同尺度上重构
         # x_cat 必须是 long，不能转 dtype
-        return x_cont, x_cat, tgt_cont.to(self.dtype), tgt_cat
+
+        return x_cont, x_cat, tgt_cont, tgt_cat
 
     def _beta(self) -> float:
         # 线性退火到 1.0
@@ -134,7 +131,11 @@ class VAETrainer:
         x_cont, x_cat, tgt_cont, tgt_cat = self._prep_batch(data)
 
         use_amp = self.use_autocast and self.device.type == "cuda" and (self.dtype in (torch.float16, torch.bfloat16))
-        with autocast(enabled=use_amp, dtype=self.dtype if self.dtype in (torch.float16, torch.bfloat16) else None):
+        with autocast(
+            device_type=self.device.type,
+            enabled=use_amp, 
+            dtype=self.dtype if self.dtype in (torch.float16, torch.bfloat16) else None,
+        ):
             cont_params, disc_logits_list, mu, logvar = self.model(x_cont, x_cat)
 
             loss_cont = gaussian_nll_from_params(cont_params, tgt_cont)
@@ -203,23 +204,87 @@ class VAETrainer:
 
         self.save_model()
 
+    @torch.no_grad()
+    def evaluate(self, batch_size: int = 64, num_workers: int = 0) -> dict:
+
+        self.model.eval()
+        dataloader = self.get_dataloader(batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+        total_rmse = 0.0
+        total_mae = 0.0
+        total_disc_acc = 0.0
+        n_batches = 0
+        n_disc_vars = len(self.dataset.cat_sizes)
+        n_samples = 0
+
+        for batch in tqdm(dataloader, desc="Evaluating"):
+            x_cont, x_cat, tgt_cont, tgt_cat = self._prep_batch(batch)
+
+            # forward (encode + decode)
+            cont_params, disc_logits_list, mu, logvar = self.model(x_cont, x_cat)
+            cont_mu = cont_params[..., 0]  # mean prediction
+
+            # continuous metrics
+            diff = tgt_cont - cont_mu
+            rmse = torch.sqrt((diff ** 2).mean())
+            mae = diff.abs().mean()
+
+            # discrete metrics
+            acc_sum = 0.0
+            for i, logits_i in enumerate(disc_logits_list):
+                pred_i = logits_i.argmax(dim=1)
+                acc_i = (pred_i == tgt_cat[:, i]).float().mean()
+                acc_sum += acc_i.item()
+            acc_disc = acc_sum / n_disc_vars
+
+            total_rmse += rmse.item()
+            total_mae += mae.item()
+            total_disc_acc += acc_disc
+            n_batches += 1
+            n_samples += x_cont.size(0)
+
+        results = {
+            "RMSE_cont": total_rmse / n_batches,
+            "MAE_cont": total_mae / n_batches,
+            "ACC_disc": total_disc_acc / n_batches,
+        }
+
+        print(
+            f"[Eval] Continuous RMSE: {results['RMSE_cont']:.4f}, "
+            f"MAE: {results['MAE_cont']:.4f}, "
+            f"Discrete ACC: {results['ACC_disc']*100:.2f}%"
+        )
+
+        return results
+
 
 if __name__ == "__main__":
+    # trainer = VAETrainer(
+    #     config_path="config.json",
+    #     save_path="weights/vae_model.pth",
+    #     num_samples=2048,
+    #     device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    #     dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+    #     kl_warmup_steps=2000,
+    # )
+# 
+    # trainer.train(
+    #     epochs=50,
+    #     batch_size=64,
+    #     learning_rate=2e-4,
+    #     num_workers=4,
+    #     weight_decay=0.01,
+    #     log_every=5,
+    #     save_every=10,
+    # )
     trainer = VAETrainer(
         config_path="config.json",
         save_path="weights/vae_model.pth",
         num_samples=2048,
         device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+        dtype=torch.float32,
         kl_warmup_steps=2000,
+        checkpoint_path="weights/vae_model.pth.ep50",
     )
 
-    trainer.train(
-        epochs=50,
-        batch_size=64,
-        learning_rate=2e-4,
-        num_workers=4,
-        weight_decay=0.01,
-        log_every=5,
-        save_every=10,
-    )
+    trainer.evaluate(batch_size=64, num_workers=0)
