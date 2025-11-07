@@ -245,9 +245,9 @@ if __name__ == "__main__":
 
     model = DiT1D(
         input_dim=212,
-        hidden_size=256,
-        depth=8,
-        num_heads=8,
+        hidden_size=384,
+        depth=6,
+        num_heads=6,
         prompt_dim=512,
         prompt_dropout_prob=0.1,
         learn_sigma=True,

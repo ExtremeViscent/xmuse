@@ -261,14 +261,14 @@ if __name__ == "__main__":
     print(f"Train set size: {len(train_set)}, Val set size: {len(val_set)}")
 
     model = DiT1D(
-        input_dim=212, hidden_size=256, depth=8, num_heads=8,
+        input_dim=212, hidden_size=384, depth=6, num_heads=6,
         prompt_dim=512, prompt_dropout_prob=0.1, learn_sigma=False
     )
 
     cfg = TrainConfig(
-        batch_size=128, T=1000, schedule="cosine", pred_type="v",
+        batch_size=256, T=1000, schedule="cosine", pred_type="v",
         lr=1e-4, warmup_steps=1000, total_steps=20000,
-        ema_decay=0.9999, device="cuda" if torch.cuda.is_available() else "cpu"
+        ema_decay=0.9, device="cuda" if torch.cuda.is_available() else "cpu"
     )
 
     trainer = Trainer(model, train_set, val_set, cfg)

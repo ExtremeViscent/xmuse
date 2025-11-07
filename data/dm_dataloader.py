@@ -177,10 +177,36 @@ class ParamAudioDataset(Dataset):
         for params in tqdm(param_list, desc="Encoding parameters"):
             param_tensor = self.param_meta.param_encode(self.sorted_param_keys, params)
             param_embedding_list.append(param_tensor)
-        print(f"Parameter tensors encoded.")
+        print(f"Parameter tensors encoded.")        
         
-        self.param_tensors = to_gauss_from_uniform(torch.stack(param_embedding_list).to(device=self.device, dtype=self.dtype))
+        param_tensors = to_gauss_from_uniform(torch.stack(param_embedding_list).to(device=self.device, dtype=self.dtype))
+        
+
+        # Calculate Mean and Std for each parameter
+        print("Calculating parameter means and stds...")
+        self.means = torch.mean(param_tensors, dim=0, keepdim=True)  # (1, num_params)
+        self.stds = torch.std(param_tensors, dim=0, keepdim=True) + 1e-4    # (1, num_params)
+        
+        # Standardize parameters
+        self.param_tensors = (param_tensors - self.means) / self.stds
+        self.param_tensors = self.param_tensors.to(device=self.device, dtype=self.dtype)
+
         print(f"Initialization complete.")
+
+    def from_vector_to_params(self, x_all: torch.Tensor) -> Dict[str, float]:
+        """
+        Decode a batch of parameter tensors back into parameter dicts.
+        
+        Args:
+            x_all: tensor of shape (1, num_params)
+        Returns:
+            List of parameter dicts
+        """
+        # De-standardize
+        x_all = x_all * self.stds + self.means  # (1, num_params)
+        
+        params = self.param_meta.param_decode(self.sorted_param_keys, x_all.squeeze(0))
+        return params
 
     def __len__(self):
         return self.num_samples
