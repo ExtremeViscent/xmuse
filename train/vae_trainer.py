@@ -7,7 +7,7 @@ from torch.amp import autocast, GradScaler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from data.dataloader import RandomParamDataset
+from data.vae_dataloader import RandomParamDataset
 from model.simple_vae import get_vae_model
 
 from .loss import gaussian_nll_from_params, multi_ce_loss, kl_gaussian
