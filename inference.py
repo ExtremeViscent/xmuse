@@ -102,16 +102,16 @@ if __name__ == "__main__":
     # Load cache dataset and pick one random sample
     cache_path = "cache/param_audio_dataset.pt"
     dataset = torch.load(cache_path, weights_only=False)
-    sample = dataset[500]
+    sample = dataset[16]
 
     from model.dit import DiT1D
 
     model = DiT1D(
-        input_dim=212, hidden_size=256, depth=8, num_heads=8,
+        input_dim=212, hidden_size=384, depth=6, num_heads=6,
         prompt_dim=512, prompt_dropout_prob=0.1, learn_sigma=False
     ).to("cuda")
 
-    checkpoint_path = "checkpoints/step_0020000_final.pt"
+    checkpoint_path = "checkpoints/step_0010000_final.pt"
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     model.load_state_dict(checkpoint['ema'], strict=True)
     model.eval()
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     sampled = sample_ddim_ode(
         model,
         shape,
-        steps=50,
+        steps=100,
         guidance_scale=1.0,
         cond=sample['features'].to("cuda").unsqueeze(0),
         pred_type='v',
@@ -129,14 +129,8 @@ if __name__ == "__main__":
     )
     print("Sampled shape:", sampled.shape)
 
-    from functools import partial
-    decode_fn = partial(dataset.param_meta.param_decode, dataset.sorted_param_keys)
-    print(sampled)
-    print(sample['params'])
-    exit(0)
-
-    output_config = decode_fn(sampled.squeeze(0).cpu())
-    baseline_config = decode_fn(sample['params'])
+    output_config = dataset.from_vector_to_params(sampled.cpu())
+    baseline_config = dataset.from_vector_to_params(sample['params'].unsqueeze(0))
 
     print("Output config:", output_config)
     print("Original config:", baseline_config)

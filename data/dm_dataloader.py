@@ -247,6 +247,10 @@ if __name__ == "__main__":
     cache_path = "cache/param_audio_dataset.pt"
     torch.save(dataset, cache_path)
     print(f"\nDataset saved to {cache_path}")
+
+    dataset = torch.load(cache_path, weights_only=False)
+    print(f"Dataset loaded from {cache_path}")
+    print(dataset.means)
     
     # We have 120080 samples in total.
     # We randomly pick 100000 samples for training, and the rest for validation.
